@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Project 3 GUI</title>
+
+        <script>
+            function createRow(text) {
+                let a = document.createElement("a");
+                a.href = "http://"+text[1];
+                a.innerHTML = `
+<div class = "urlBox">
+    <p>${text[1]}</p>
+</div>
+`;
+                return a;
+            }
+
+            async function submitQuery() {
+                let response = await fetch("http://localhost:8000/?q="+encodeURIComponent(document.getElementById("searchQuery").value));
+                response = await response.json();
+                if(response["calculation"] !== null){
+                    document.getElementById("calculation").innerText = response["query"] + " = " + response["calculation"]
+                }
+                else{
+                    document.getElementById("calculation").innerText = "";
+                }
+                document.getElementById("totalResults").innerText = response["totalResults"] + " Results";
+                document.getElementById("urlList").innerHTML = "";
+                for(let i in response["urlList"]){
+                    document.getElementById("urlList").appendChild(createRow(response["urlList"][i]));
+                }
+            }
+        </script>
+
+    </head>
+    <body>
+        <div class="container">
+            <div class="search">
+                <input id="searchQuery"/>
+                <button id="" onclick="submitQuery()">Search</button>
+            </div>
+            <br/>
+            <p id="totalResults"></p>
+            <br/>
+            <p id="calculation"></p>
+            <br/>
+            <div class="urlList" id="urlList">
+
+            </div>
+        </div>
+
+    </body>
+
+    <script>
+        document.addEventListener("keydown", function(event) {
+            console.log("key pressed");
+            if (event.keyCode === 13){
+                submitQuery()
+            }
+        });
+    </script>
+    <style>
+        .search{
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        .container{
+            margin-left: 20em;
+            margin-right: 20em;
+        }
+        .urlBox{
+            border: solid 3px #ebebeb;
+            background: #ebebeb;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .urlList{
+            width: 100%;
+        }
+    </style>
+</html>

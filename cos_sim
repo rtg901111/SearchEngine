@@ -1,0 +1,97 @@
+import pickle
+import math
+import json
+
+file = open("./indexfile.pickle", "rb")
+full_dict = pickle.load(file)
+urlDict = json.loads(open("./WEBPAGES_RAW/bookkeeping.json").read())
+file.close()
+
+
+def order(query: str):
+    try:
+        query_words = query.split()
+        #----------ADDED ABOVE CODE--------------------------------------------#
+        
+        docList = {}
+        tfidf_dict = {}
+        for key in query_words:
+            dft = len(full_dict[key])  # dft is the number of documents containing the word
+            for k, v in full_dict[key].items():  # key = ( folder, file) value = frequency of the word
+                tftd = v  # tftd = number of occurrences of t in document d    tftd = term frequency
+                N = 37497  # N is the total # of documents in the corpus
+                wtd = tftd * math.log(N / dft)          #wtd = tfidf for doc
+                #docList[urlDict[k[0]+"/"+k[1]]] = wtd
+
+                if urlDict[k[0]+"/"+k[1]] in docList:
+                    docList[urlDict[k[0] + "/" + k[1]]] = docList[urlDict[k[0] + "/" + k[1]]] + wtd
+                else:
+                    docList[urlDict[k[0] + "/" + k[1]]] = wtd
+        
+        #---------------------------------------------------------------------#
+                normalized_tftd = (v/word_counter[k])
+                normalized_wtd = normalized_tftd * math.log(N/dft)
+                if k not in tfidf_dict:
+                    tfidf_dict[k] = {}
+                    tfidf_dict[k][key] = normalized_wtd
+                tfidf_dict[k][key] = normalized_wtd
+                
+        if len(query_words) == 1:
+            return sorted(docList, key=lambda key: docList[key], reverse=True)
+
+
+        docList2 = {}        
+        word_counter = {}
+        for word in full_dict:
+            for directory in full_dict[word].keys():
+                if directory not in word_counter:
+                    word_counter[directory] = 1
+                else:
+                    word_counter[directory] += 1     
+        
+        tfidf_query_list = []
+        for query in query_words:
+            N = 37497
+            dft = len(full_dict[query])
+            number_of_query = query_words.count(query)
+            tf_for_query = number_of_query / len(query_words)
+            idf_for_query = math.log(N/dft)
+            tfidf_for_query = tf_for_query * idf_for_query
+
+            tfidf_query_list.append(tfidf_for_query)
+
+        cos_sim_dict = {}
+        for k in tfidf_dict.keys():
+            if len(tfidf_dict[k]) == len(query_words):
+                dot_product = 0
+                mag_query = 0
+                mag_doc = 0
+                for i in range(len(tfidf_query_list)):
+                    dot_product += tfidf_query_list[i] * tfidf_dict[k][query_words[i]]
+                    mag_query += (tfidf_query_list[i] ** 2)
+                    mag_doc += (tfidf_dict[k][query_words[i]])
+                        
+                mag_query = math.sqrt(mag_query)
+                mag_doc = math.sqrt(mag_doc)    
+                cosine_sim = dot_product / (mag_query * mag_doc)
+                #cos_sim_dict[k] = cosine_sim
+                docList2[urlDict[k[0] + "/" + k[1]]] = cosine_sim
+                
+        #for x in cos_sim_dict:
+        #    print(cos_sim_dict[x])
+        #print(len(cos_sim_dict))
+                
+        return sorted(docList2, key=lambda key: docList[key], reverse=True)
+    except KeyError:
+        print("KeyError: ", key)
+        return []
+
+
+
+order("computer science")
+writer = open("result.txt", "w")
+writer.write('Informatics Token URL Count: ' + str(len(full_dict['informatics'])) + '\n')
+writer.write('Mondego Token URL Count: ' + str(len(full_dict['mondego'])) + '\n')
+writer.write('Irvine Token URL Count: ' + str(len(full_dict['irvine'])) + '\n')
+writer.write(str(full_dict))
+writer.close()
